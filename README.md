@@ -43,17 +43,7 @@ npm run dev
 └── vite.config.js
 ```
 
-## 4. Next Steps (Three.js Example)
-
-```bash
-# Add Three.js
-npm install three
-
-# (Optional) Add Linter/Prettier manually
-npm install -D eslint prettier eslint-plugin-vue
-```
-
-## 5. Useful Commands
+## 4. Commands
 
 ```bash
 npm run dev     # Development
