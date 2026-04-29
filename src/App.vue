@@ -1,11 +1,13 @@
 <template>
   <div id="app">
+    <NavBar />
     <CubeCanvas />
   </div>
 </template>
 
 <script setup>
 import CubeCanvas from './components/CubeCanvas.vue'
+import NavBar from './components/NavBar.vue'
 </script>
 
 <style>
