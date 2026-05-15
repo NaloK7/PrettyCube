@@ -1,41 +1,65 @@
 <script setup>
-import { ref, onMounted, onUnmounted, provide } from 'vue'
-import { useThreeScene } from '../composables/useThreeScene.js'
-import { useCubeEvents } from '../composables/useCubeEvents.js'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useStore } from '@/composables/useStore.js'
+import { useCubeScene } from '@/composables/useCubeScene.js'
+import { useMouseEvents } from '@/composables/useMouseEvents.js'
 
 const containerRef = ref(null)
 
-let threeScene = null
-let cubeEvents = null
+const { threeScene } = useStore()
+let mouseEvents = null
+
+function onMouseDown(event) {
+  if (mouseEvents && threeScene.value) {
+    mouseEvents.handleMouseDown(event, threeScene.value)
+  }
+}
+
+function onMouseMove(event) {
+  if (mouseEvents && threeScene.value) {
+    mouseEvents.handleMouseMove(event, threeScene.value)
+  }
+}
+
+function onMouseUp() {
+  if (mouseEvents && threeScene.value) {
+    mouseEvents.handleMouseUp(threeScene.value)
+  }
+}
 
 onMounted(async () => {
   if (containerRef.value) {
-    // await useThreeScene(containerRef.value, {modelPath: 'memoYellowOnly'})
-    threeScene = await useThreeScene(containerRef.value, { modelPath: 'base' })
-    cubeEvents = useCubeEvents(containerRef.value, threeScene)
+    // await useCubeScene(containerRef.value, {modelPath: 'memoYellowOnly'})
+    threeScene.value = await useCubeScene(containerRef.value, {
+      modelPath: 'base',
+    })
+
+    mouseEvents = useMouseEvents(containerRef.value)
   }
 })
 
 onUnmounted(() => {
-  if (cubeEvents) {
-    cubeEvents.cleanup()
-    cubeEvents = null
-  }
-  if (threeScene) {
-    threeScene.cleanup()
-    threeScene = null
+  if (threeScene.value) {
+    threeScene.value.cleanup()
+    threeScene.value = null
   }
 })
 </script>
 
 <template>
-  <div ref="containerRef" class="cube-container"></div>
+  <div
+    ref="containerRef"
+    class="cube-container"
+    @mousedown.left="onMouseDown"
+    @mousemove="onMouseMove"
+    @mouseup="onMouseUp"
+  ></div>
 </template>
 
 <style scoped>
 .cube-container {
-  width: 100%;
   height: 100%;
+  width: 100%;
   position: relative;
   z-index: 1;
 }

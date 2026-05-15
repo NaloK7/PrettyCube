@@ -4,20 +4,34 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { ref } from 'vue'
 
 /* components:
-  - rubiks cube:
-    - 81 elements:
-      - corner: 3 faces
-      - middle: 2 faces
-      - center: 1 face
-      - one special in the middle of the cube: no face
-      - name: Cube_LDB → (name)_(move possible)
-    - face:
-      - name: Cube_LDB_green → (name)_(move possible)_(color)
-  - detectorGrp: 
+  - rubiksCube:                               ## the whole main cube ##
+    - useData:
+      - name: "RubiksCube"
+      - type: "rubiksCube"
+    - children:                               ## 27 little cube ##
+      -- useData:
+        -- type: "cube"
+        -- name: "Cube_LDB" → Cube_(move possible)
+      -- children:                            ## 0-3 face(s) ##
+        --- type: "face"  
+        --- name: "Cube_LDB_green" → Cube_(move possible)_(color)
+        --- color: "green"
+
+  - detectorGrp:
+    - userData:
+      - face: (down, up, left, ...)
+      - type: "detector"
+      - horMouv: (selector_B, ...)
+      - verMouv: (selector_B, ...)
     - 54 elements
     - fixed, unmovable
     - used to know which cube is in that location
+    
   - selectorGrp:
+    - useData:
+      - axis: (x, y, z)
+      - mouvement: (L, R, B, ...)
+      - type: "selector"
     - 9 elements 
     - fixed, unmovable
     - intersect all cube involved in a movement
@@ -25,13 +39,17 @@ import { ref } from 'vue'
     - name: selector_B → intersect all the cube involved in B (back) mouvement
 */
 const MODEL_PATHS = {
-  base: '/rubiksCubeFaced.glb',
+  base: '/rubiksCubeFaced0.1.glb',
   memoYellowOnly: '/rubiksCubeYellowOnly.glb',
 }
 
-export async function useThreeScene(container, options = {}) {
+export async function useCubeScene(container, options = {}) {
   const { modelPath = 'base' } = options
   const containerRect = container.getBoundingClientRect()
+  if (containerRect.width === 0 || containerRect.height === 0) {
+  console.warn("Le conteneur a une taille de 0. Attente de stabilisation...")
+  await new Promise(resolve => setTimeout(resolve, 100)) // Attendre 100ms
+}
   const width = containerRect.width
   const height = containerRect.height
   const isAnimate = ref(false)
@@ -52,11 +70,12 @@ export async function useThreeScene(container, options = {}) {
   container.appendChild(renderer.domElement)
 
   // Orbit controls
-  const controls = ref(new OrbitControls(camera, renderer.domElement))
-  controls.value.minDistance = 30 // Minimum zoom in
-  controls.value.maxDistance = 40 // Maximum zoom out
-  controls.value.target.set(0, 0, 0) // Set the target for the camera to look at
-  controls.value.update() // Update the controls
+  const OrbitControl = ref(new OrbitControls(camera, renderer.domElement))
+  // todo allow full rotation on every direction
+  OrbitControl.value.minDistance = 30 // Minimum zoom in
+  OrbitControl.value.maxDistance = 40 // Maximum zoom out
+  OrbitControl.value.target.set(0, 0, 0) // Set the target for the camera to look at
+  OrbitControl.value.update() // Update the controls
 
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 2.7)
@@ -81,7 +100,6 @@ export async function useThreeScene(container, options = {}) {
     cube.traverse((child) => {
       if (child.userData.type === 'rubiksCube') {
         rubiksCube = child
-        // rubiksCube.visible = false
       }
       if (child.userData.type === 'selectorGrp') {
         selectorGrp = child
@@ -98,12 +116,12 @@ export async function useThreeScene(container, options = {}) {
 
   // Animation loop
   function animate() {
-    if (!animationId) return // Arrête la boucle si `animationId` est null
+    if (!animationId) return
     animationId = requestAnimationFrame(animate)
-    controls.value.update()
+    OrbitControl.value.update()
     renderer.render(scene, camera)
   }
-  animationId = requestAnimationFrame(animate) // Démarre la boucle
+  animationId = requestAnimationFrame(animate)
 
   // Handle resize
   function updateSize() {
@@ -117,17 +135,20 @@ export async function useThreeScene(container, options = {}) {
   let resizeObserver = new ResizeObserver(updateSize)
   resizeObserver.observe(container)
 
+  // ANIMATION ############
+
   function startAnimation() {
     isAnimate.value = true
+    OrbitControl.value.enabled = false
   }
   function stopAnimation() {
     isAnimate.value = false
+    OrbitControl.value.enabled = true
   }
 
-  function animateRotation(group, selected, targetQuaternion) {
+  function animateRotation(group, selected, targetQuaternion, speed=0.15) {
     return new Promise((resolve) => {
-      const speed = 0.15
-
+      
       function update() {
         group.quaternion.slerp(targetQuaternion, speed)
 
@@ -145,6 +166,8 @@ export async function useThreeScene(container, options = {}) {
   }
 
   function reparentSelectedCubes(group, selected) {
+    
+    //todo move to useCubeLogic
     selected.forEach((cube) => {
       cube.position.copy(cube.getWorldPosition(new THREE.Vector3()))
       cube.quaternion.copy(cube.getWorldQuaternion(new THREE.Quaternion()))
@@ -153,28 +176,29 @@ export async function useThreeScene(container, options = {}) {
     })
     scene.remove(group)
   }
+  // CLEAN-UP ######
 
   function cleanup() {
     if (resizeObserver) {
       resizeObserver.disconnect()
-      resizeObserver = null // Évite les références fantômes
+      resizeObserver = null
     }
     if (animationId) {
       cancelAnimationFrame(animationId)
       animationId = null
     }
 
-    if (controls.value) {
-      controls.value.dispose()
-      controls.value = null;
+    if (OrbitControl.value) {
+      OrbitControl.value.dispose()
+      OrbitControl.value = null
     }
 
     if (ambientLight) scene.remove(ambientLight)
-    if(spotLight) scene.remove(spotLight)
+    if (spotLight) scene.remove(spotLight)
     if (rubiksCube) scene.remove(rubiksCube)
-      rubiksCube = null
+    rubiksCube = null
     if (selectorGrp) scene.remove(selectorGrp)
-      selectorGrp = null
+    selectorGrp = null
     if (detectorGrp) scene.remove(detectorGrp)
     detectorGrp = null
 
@@ -185,14 +209,12 @@ export async function useThreeScene(container, options = {}) {
         if (object.material) {
           if (Array.isArray(object.material)) {
             object.material.forEach((mat) => {
-              // Libère TOUTES les textures du matériau
               Object.values(mat).forEach((prop) => {
                 if (prop && prop instanceof THREE.Texture) prop.dispose()
               })
               mat.dispose()
             })
           } else {
-            // Libère TOUTES les textures du matériau
             Object.values(object.material).forEach((prop) => {
               if (prop && prop instanceof THREE.Texture) prop.dispose()
             })
@@ -207,17 +229,16 @@ export async function useThreeScene(container, options = {}) {
     }
     if (renderer) {
       renderer.dispose()
-      renderer.forceContextLoss() // Force la libération du contexte WebGL
-      renderer.domElement = null // Supprime la référence au canvas
+      renderer.forceContextLoss()
+      renderer.domElement = null
     }
-
   }
 
   return {
     scene,
     camera,
     renderer,
-    controls,
+    OrbitControl,
     isAnimate,
     rubiksCube,
     detectorGrp,

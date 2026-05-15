@@ -1,23 +1,29 @@
 <template>
   <div id="app">
-    <NavBar />
-    <CubeCanvas />
+    <InteractionBar id="interaction-bar" />
+    <CubeCanvas id="cube-canvas" />
   </div>
 </template>
 
 <script setup>
 import CubeCanvas from './components/CubeCanvas.vue'
-import NavBar from './components/NavBar.vue'
+import InteractionBar from './components/InteractionBar.vue'
 </script>
 
 <style>
 * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+@media screen and (max-width: 375px) {
+#app { 
+  flex-direction: column-reverse;
+}
 }
 </style>
