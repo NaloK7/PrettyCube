@@ -47,9 +47,8 @@ export async function useCubeScene(container, options = {}) {
   const { modelPath = 'base' } = options
   const containerRect = container.getBoundingClientRect()
   if (containerRect.width === 0 || containerRect.height === 0) {
-  console.warn("Le conteneur a une taille de 0. Attente de stabilisation...")
-  await new Promise(resolve => setTimeout(resolve, 100)) // Attendre 100ms
-}
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
   const width = containerRect.width
   const height = containerRect.height
   const isAnimate = ref(false)
@@ -60,8 +59,7 @@ export async function useCubeScene(container, options = {}) {
 
   // Camera
   const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 1000)
-  camera.position.set(1, 0, 0)
-  camera.position.set(5.9, 5.5, 5.5)
+  camera.position.set(1, 1, 1)
   camera.lookAt(scene.position)
 
   // Renderer
@@ -70,8 +68,13 @@ export async function useCubeScene(container, options = {}) {
   container.appendChild(renderer.domElement)
 
   // Orbit controls
+
   const OrbitControl = ref(new OrbitControls(camera, renderer.domElement))
-  // todo allow full rotation on every direction
+  OrbitControl.value.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.NONE,
+    RIGHT: THREE.MOUSE.NONE,
+  }
   OrbitControl.value.minDistance = 30 // Minimum zoom in
   OrbitControl.value.maxDistance = 40 // Maximum zoom out
   OrbitControl.value.target.set(0, 0, 0) // Set the target for the camera to look at
@@ -88,16 +91,24 @@ export async function useCubeScene(container, options = {}) {
 
   // Load GLB model
   const loader = new GLTFLoader()
+  let cube = null
   let rubiksCube = null
   let selectorGrp = null
   let detectorGrp = null
   try {
     const gltf = await loader.loadAsync(MODEL_PATHS[modelPath])
-    const cube = gltf.scene
+    cube = gltf.scene
     scene.add(cube)
     cube.position.set(0, 0, 0)
+
     // Access groups via userData.type
     cube.traverse((child) => {
+      // Sauvegarde état initial
+      child.userData.initialState = {
+        position: child.position.clone(),
+        quaternion: child.quaternion.clone(),
+        scale: child.scale.clone(),
+      }
       if (child.userData.type === 'rubiksCube') {
         rubiksCube = child
       }
@@ -146,9 +157,27 @@ export async function useCubeScene(container, options = {}) {
     OrbitControl.value.enabled = true
   }
 
-  function animateRotation(group, selected, targetQuaternion, speed=0.15) {
+  function resetModel() {
+    cube.traverse((child) => {
+      const init = child.userData.initialState
+
+      if (!init) return
+
+      child.position.copy(init.position)
+      child.quaternion.copy(init.quaternion)
+      child.scale.copy(init.scale)
+    })
+  }
+  function resetCube() {
+    const init = cube.userData.initialState
+
+    cube.position.copy(init.position)
+    cube.quaternion.copy(init.quaternion)
+    cube.scale.copy(init.scale)
+  }
+
+  function animateRotation(group, selected, targetQuaternion, speed = 0.15) {
     return new Promise((resolve) => {
-      
       function update() {
         group.quaternion.slerp(targetQuaternion, speed)
 
@@ -166,7 +195,6 @@ export async function useCubeScene(container, options = {}) {
   }
 
   function reparentSelectedCubes(group, selected) {
-    
     //todo move to useCubeLogic
     selected.forEach((cube) => {
       cube.position.copy(cube.getWorldPosition(new THREE.Vector3()))
@@ -248,5 +276,6 @@ export async function useCubeScene(container, options = {}) {
     stopAnimation,
     animateRotation,
     cleanup,
+    resetModel,
   }
 }

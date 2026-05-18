@@ -99,7 +99,7 @@ export function useCubeLogic() {
 
     const possibleMove = ['L', 'M', 'R', 'U', 'E', 'D', 'F', 'S', 'B']
     const sequence = []
-    const moveNumber = 35
+    const moveNumber = 25
 
     while (sequence.length < moveNumber) {
       const randomElement =

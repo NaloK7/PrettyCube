@@ -1,12 +1,20 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useStore } from '@/composables/useStore.js'
 import { useCubeScene } from '@/composables/useCubeScene.js'
 import { useMouseEvents } from '@/composables/useMouseEvents.js'
 
 const containerRef = ref(null)
 
-const { threeScene } = useStore()
+const { threeScene, resetScene } = useStore()
+
+watch(resetScene, newValue => {
+  if (newValue) {
+    threeScene.value.resetModel()
+  }
+  resetScene.value = false
+})
+
 let mouseEvents = null
 
 function onMouseDown(event) {
@@ -27,6 +35,24 @@ function onMouseUp() {
   }
 }
 
+function resetCamera() { }
+
+// async function toggleResetScene() {
+//   if (threeScene.value) {
+//     threeScene.value.cleanup()
+//     threeScene.value = null
+//     mouseEvents = null
+//   }
+//   if (containerRef.value) {
+//     // await useCubeScene(containerRef.value, {modelPath: 'memoYellowOnly'})
+//     threeScene.value = await useCubeScene(containerRef.value, {
+//       modelPath: 'base',
+//     })
+
+//     mouseEvents = useMouseEvents(containerRef.value)
+//   }
+  
+// }
 onMounted(async () => {
   if (containerRef.value) {
     // await useCubeScene(containerRef.value, {modelPath: 'memoYellowOnly'})
@@ -42,6 +68,7 @@ onUnmounted(() => {
   if (threeScene.value) {
     threeScene.value.cleanup()
     threeScene.value = null
+    mouseEvents = null
   }
 })
 </script>

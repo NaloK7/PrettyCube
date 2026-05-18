@@ -3,7 +3,12 @@ import { useStore } from '@/composables/useStore.js'
 import { useCubeLogic } from '@/composables/useCubeLogic'
 
 const { handleMixCube } = useCubeLogic()
-const { threeScene } = useStore()
+const { threeScene, resetScene } = useStore()
+
+function triggerResetScene() {
+  resetScene.value = true
+}
+
 function mixCube() {
   handleMixCube(threeScene.value)
 }
@@ -11,7 +16,7 @@ function mixCube() {
 
 <template>
   <nav class="interaction-bar">
-    <button @click="mixCube" class="reset-scene">
+    <button @click="triggerResetScene" class="reset-scene">
       <svg
         width="31"
         height="25"
@@ -34,7 +39,7 @@ function mixCube() {
         />
       </svg>
     </button>
-    <button @click="" class="start">
+    <button @click="mixCube" class="start">
       <svg
         width="22"
         height="25"

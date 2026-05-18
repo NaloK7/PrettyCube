@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 import * as THREE from 'three'
 import { vectorUtils } from '@/utils/vectorUtils'
 import { useCubeLogic } from '@/composables/useCubeLogic'

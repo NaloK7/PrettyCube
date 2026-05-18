@@ -1,14 +1,14 @@
+<script setup>
+import CubeCanvas from './components/CubeCanvas.vue'
+import InteractionBar from './components/InteractionBar.vue'
+</script>
+
 <template>
   <div id="app">
     <InteractionBar id="interaction-bar" />
     <CubeCanvas id="cube-canvas" />
   </div>
 </template>
-
-<script setup>
-import CubeCanvas from './components/CubeCanvas.vue'
-import InteractionBar from './components/InteractionBar.vue'
-</script>
 
 <style>
 * {
