@@ -6,14 +6,7 @@ import { useMouseEvents } from '@/composables/useMouseEvents.js'
 
 const containerRef = ref(null)
 
-const { threeScene, resetScene } = useStore()
-
-watch(resetScene, newValue => {
-  if (newValue) {
-    threeScene.value.resetModel()
-  }
-  resetScene.value = false
-})
+const { threeScene } = useStore()
 
 let mouseEvents = null
 
@@ -35,24 +28,6 @@ function onMouseUp() {
   }
 }
 
-function resetCamera() { }
-
-// async function toggleResetScene() {
-//   if (threeScene.value) {
-//     threeScene.value.cleanup()
-//     threeScene.value = null
-//     mouseEvents = null
-//   }
-//   if (containerRef.value) {
-//     // await useCubeScene(containerRef.value, {modelPath: 'memoYellowOnly'})
-//     threeScene.value = await useCubeScene(containerRef.value, {
-//       modelPath: 'base',
-//     })
-
-//     mouseEvents = useMouseEvents(containerRef.value)
-//   }
-  
-// }
 onMounted(async () => {
   if (containerRef.value) {
     // await useCubeScene(containerRef.value, {modelPath: 'memoYellowOnly'})

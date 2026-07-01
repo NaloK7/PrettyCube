@@ -51,7 +51,7 @@ export async function useCubeScene(container, options = {}) {
   }
   const width = containerRect.width
   const height = containerRect.height
-  const isAnimate = ref(false)
+  let isAnimate = false
   let animationId = null
   // Scene
   const scene = new THREE.Scene()
@@ -61,6 +61,7 @@ export async function useCubeScene(container, options = {}) {
   const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 1000)
   camera.position.set(1, 1, 1)
   camera.lookAt(scene.position)
+  let cameraResetting = false
 
   // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -69,16 +70,16 @@ export async function useCubeScene(container, options = {}) {
 
   // Orbit controls
 
-  const OrbitControl = ref(new OrbitControls(camera, renderer.domElement))
-  OrbitControl.value.mouseButtons = {
+  const OrbitControl = new OrbitControls(camera, renderer.domElement)
+  OrbitControl.mouseButtons = {
     LEFT: THREE.MOUSE.ROTATE,
     MIDDLE: THREE.MOUSE.NONE,
     RIGHT: THREE.MOUSE.NONE,
   }
-  OrbitControl.value.minDistance = 30 // Minimum zoom in
-  OrbitControl.value.maxDistance = 40 // Maximum zoom out
-  OrbitControl.value.target.set(0, 0, 0) // Set the target for the camera to look at
-  OrbitControl.value.update() // Update the controls
+  OrbitControl.minDistance = 30 // Minimum zoom in
+  OrbitControl.maxDistance = 40 // Maximum zoom out
+  OrbitControl.target.set(0, 0, 0) // Set the target for the camera to look at
+  OrbitControl.update() // Update the controls
 
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 2.7)
@@ -103,7 +104,7 @@ export async function useCubeScene(container, options = {}) {
 
     // Access groups via userData.type
     cube.traverse((child) => {
-      // Sauvegarde état initial
+      // Save initial stat
       child.userData.initialState = {
         position: child.position.clone(),
         quaternion: child.quaternion.clone(),
@@ -129,7 +130,9 @@ export async function useCubeScene(container, options = {}) {
   function animate() {
     if (!animationId) return
     animationId = requestAnimationFrame(animate)
-    OrbitControl.value.update()
+    if (!cameraResetting) {
+      OrbitControl.update()
+    }
     renderer.render(scene, camera)
   }
   animationId = requestAnimationFrame(animate)
@@ -149,32 +152,61 @@ export async function useCubeScene(container, options = {}) {
   // ANIMATION ############
 
   function startAnimation() {
-    isAnimate.value = true
-    OrbitControl.value.enabled = false
+    isAnimate = true
+    OrbitControl.enabled = false
   }
+
   function stopAnimation() {
-    isAnimate.value = false
-    OrbitControl.value.enabled = true
+    isAnimate = false
+    OrbitControl.enabled = true
   }
 
-  function resetModel() {
-    cube.traverse((child) => {
-      const init = child.userData.initialState
+let resetId = null
 
-      if (!init) return
+function resetCamera() {
 
-      child.position.copy(init.position)
-      child.quaternion.copy(init.quaternion)
-      child.scale.copy(init.scale)
-    })
+  if (cameraResetting) return
+  cameraResetting = true
+
+  OrbitControl.enabled = false
+
+  const targetPosition = new THREE.Vector3(1, 1, 1)
+  const targetLookAt = new THREE.Vector3(0, 0, 0)
+
+  function update() {
+
+    if (!cameraResetting) return
+
+    camera.position.lerp(targetPosition, 0.1)
+    OrbitControl.target.lerp(targetLookAt, 0.1)
+
+    const done =
+      camera.position.distanceTo(targetPosition) < 0.01 &&
+      OrbitControl.target.distanceTo(targetLookAt) < 0.01
+
+    if (!done) {
+
+      resetId = requestAnimationFrame(update)
+
+    } else {
+
+      camera.position.copy(targetPosition)
+      OrbitControl.target.copy(targetLookAt)
+
+      OrbitControl.update()
+
+      OrbitControl.enabled = true
+      cameraResetting = false
+      resetId = null
+      console.log("else");
+      
+    }
   }
-  function resetCube() {
-    const init = cube.userData.initialState
 
-    cube.position.copy(init.position)
-    cube.quaternion.copy(init.quaternion)
-    cube.scale.copy(init.scale)
-  }
+  if (resetId) cancelAnimationFrame(resetId)
+
+  resetId = requestAnimationFrame(update)
+}
 
   function animateRotation(group, selected, targetQuaternion, speed = 0.15) {
     return new Promise((resolve) => {
@@ -217,8 +249,8 @@ export async function useCubeScene(container, options = {}) {
     }
 
     if (OrbitControl.value) {
-      OrbitControl.value.dispose()
-      OrbitControl.value = null
+      OrbitControl.dispose()
+      OrbitControl = null
     }
 
     if (ambientLight) scene.remove(ambientLight)
@@ -276,6 +308,6 @@ export async function useCubeScene(container, options = {}) {
     stopAnimation,
     animateRotation,
     cleanup,
-    resetModel,
+    resetCamera,
   }
 }

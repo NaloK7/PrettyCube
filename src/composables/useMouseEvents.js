@@ -20,7 +20,7 @@ export function useMouseEvents() {
   const { prepareRotation } = useCubeLogic()
 
   function handleMouseDown(event, threeScene) {
-    let isAnimate = threeScene.isAnimate.value
+    let isAnimate = threeScene.isAnimate
     if (!isAnimate) {
       const raycaster = new THREE.Raycaster()
       startMouse = getMouseNDC(event, threeScene.containerRect)
@@ -30,9 +30,9 @@ export function useMouseEvents() {
         true
       )[0]
       if (intersect) {
-        intersectedDetector = intersect.object 
-        dragging = true 
-        threeScene.OrbitControl.value.enabled = false
+        intersectedDetector = intersect.object
+        dragging = true
+        threeScene.OrbitControl.enabled = false
         let vectors = getLocalVectors(intersectedDetector, threeScene.camera)
         vectors = normalizeFaceVectors(
           intersectedDetector.userData.face,
@@ -83,7 +83,7 @@ export function useMouseEvents() {
       .animateRotation(rotationGroup, selectedCubes, targetQuaternion)
       .then(() => {
         threeScene.stopAnimation()
-        threeScene.OrbitControl.value.enabled = true
+        threeScene.OrbitControl.enabled = true
       })
   }
 
@@ -92,8 +92,8 @@ export function useMouseEvents() {
     endMouse = null
     intersectedDetector = null
     dragging = false
-    if (!threeScene.isAnimate.value) {
-      threeScene.OrbitControl.value.enabled = true
+    if (!threeScene.isAnimate) {
+      threeScene.OrbitControl.enabled = true
     }
   }
 

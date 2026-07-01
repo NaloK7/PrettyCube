@@ -81,7 +81,7 @@ export function useCubeLogic() {
       if (index < sequence.length) {
         let selectorName = sequence[index]
         const { rotationGroup, selectedCubes, targetQuaternion } =
-        prepareRotation(threeScene, selectorName, false)
+          prepareRotation(threeScene, selectorName, false)
         threeScene
           .animateRotation(rotationGroup, selectedCubes, targetQuaternion, 0.25)
           .then(() => {
@@ -93,10 +93,8 @@ export function useCubeLogic() {
       }
     }
     performMove()
-
   }
   function generateRandomMoves() {
-
     const possibleMove = ['L', 'M', 'R', 'U', 'E', 'D', 'F', 'S', 'B']
     const sequence = []
     const moveNumber = 25
@@ -112,14 +110,34 @@ export function useCubeLogic() {
         sequence.push(`selector_${randomElement}`)
       }
     }
-    
+
     return sequence
+  }
+
+  function handleResetCube(threeScene) {
+    let cube = threeScene.rubiksCube.parent
+
+    cube.traverse((child) => {
+      const init = child.userData.initialState
+
+      if (!init) return
+
+      child.position.copy(init.position)
+      child.quaternion.copy(init.quaternion)
+      child.scale.copy(init.scale)
+    })
+  }
+
+  function handleResetCamera(threeScene) {
+    threeScene.resetCamera()
   }
 
   return {
     prepareRotation,
     prepareDrag,
     handleMixCube,
-    generateRandomMoves
+    generateRandomMoves,
+    handleResetCube,
+    handleResetCamera,
   }
 }
