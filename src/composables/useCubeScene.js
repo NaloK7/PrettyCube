@@ -80,6 +80,8 @@ export async function useCubeScene(container, options = {}) {
   OrbitControl.maxDistance = 40 // Maximum zoom out
   OrbitControl.target.set(0, 0, 0) // Set the target for the camera to look at
   OrbitControl.update() // Update the controls
+  let orbitStartPos = new THREE.Vector3()
+  orbitStartPos.copy(OrbitControl.object.position)
 
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 2.7)
@@ -153,60 +155,47 @@ export async function useCubeScene(container, options = {}) {
 
   function startAnimation() {
     isAnimate = true
-    OrbitControl.enabled = false
+    OrbitControl.enableRotate = false
   }
 
   function stopAnimation() {
     isAnimate = false
-    OrbitControl.enabled = true
+    OrbitControl.enableRotate = true
   }
+  /**
+   * Reset the camera to its initial position smoothly
+   * 
+   */
+  function resetCamera() {
+    if (cameraResetting) return
 
-let resetId = null
+    OrbitControl.enableRotate = false
+    cameraResetting = true
 
-function resetCamera() {
-
-  if (cameraResetting) return
-  cameraResetting = true
-
-  OrbitControl.enabled = false
-
-  const targetPosition = new THREE.Vector3(1, 1, 1)
-  const targetLookAt = new THREE.Vector3(0, 0, 0)
-
-  function update() {
-
+    requestAnimationFrame(updateCamera)
+  }
+  /**
+   * Single animation for the camera resetting
+   * 
+   */
+  function updateCamera() {
     if (!cameraResetting) return
+    // orbitStartPos -> starting position of the camera
+    OrbitControl.object.position.lerp(orbitStartPos, 0.1)
+    OrbitControl.update()
 
-    camera.position.lerp(targetPosition, 0.1)
-    OrbitControl.target.lerp(targetLookAt, 0.1)
+    const done = OrbitControl.object.position.distanceTo(orbitStartPos) < 0.3
 
-    const done =
-      camera.position.distanceTo(targetPosition) < 0.01 &&
-      OrbitControl.target.distanceTo(targetLookAt) < 0.01
-
-    if (!done) {
-
-      resetId = requestAnimationFrame(update)
-
-    } else {
-
-      camera.position.copy(targetPosition)
-      OrbitControl.target.copy(targetLookAt)
-
+    if (done) {
+      OrbitControl.object.position.copy(orbitStartPos)
       OrbitControl.update()
 
-      OrbitControl.enabled = true
+      OrbitControl.enableRotate = true
       cameraResetting = false
-      resetId = null
-      console.log("else");
-      
+    } else {
+      requestAnimationFrame(updateCamera)
     }
   }
-
-  if (resetId) cancelAnimationFrame(resetId)
-
-  resetId = requestAnimationFrame(update)
-}
 
   function animateRotation(group, selected, targetQuaternion, speed = 0.15) {
     return new Promise((resolve) => {

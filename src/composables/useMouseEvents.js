@@ -32,7 +32,7 @@ export function useMouseEvents() {
       if (intersect) {
         intersectedDetector = intersect.object
         dragging = true
-        threeScene.OrbitControl.enabled = false
+        threeScene.OrbitControl.enableRotate = false
         let vectors = getLocalVectors(intersectedDetector, threeScene.camera)
         vectors = normalizeFaceVectors(
           intersectedDetector.userData.face,
@@ -83,7 +83,7 @@ export function useMouseEvents() {
       .animateRotation(rotationGroup, selectedCubes, targetQuaternion)
       .then(() => {
         threeScene.stopAnimation()
-        threeScene.OrbitControl.enabled = true
+        threeScene.OrbitControl.enableRotate = true
       })
   }
 
@@ -93,7 +93,7 @@ export function useMouseEvents() {
     intersectedDetector = null
     dragging = false
     if (!threeScene.isAnimate) {
-      threeScene.OrbitControl.enabled = true
+      threeScene.OrbitControl.enableRotate = true
     }
   }
 

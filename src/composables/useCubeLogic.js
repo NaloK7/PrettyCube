@@ -36,10 +36,12 @@ export function useCubeLogic() {
   }
 
   function prepareDrag(threeScene, selectorName) {
+    console.log("prepare drag");
+    
     let activeSelector = threeScene.selectorGrp.children.find(
       (child) => child.name === selectorName
     )
-    threeScene.OrbitControl.enabled = false
+    threeScene.OrbitControl.enableRotate = false
     return activeSelector
   }
 
@@ -86,7 +88,7 @@ export function useCubeLogic() {
           .animateRotation(rotationGroup, selectedCubes, targetQuaternion, 0.25)
           .then(() => {
             threeScene.stopAnimation()
-            threeScene.OrbitControl.value.enabled = true
+            threeScene.OrbitControl.enableRotate = true
             index++
             setTimeout(performMove, speed + 50)
           })
@@ -94,6 +96,7 @@ export function useCubeLogic() {
     }
     performMove()
   }
+  
   function generateRandomMoves() {
     const possibleMove = ['L', 'M', 'R', 'U', 'E', 'D', 'F', 'S', 'B']
     const sequence = []
