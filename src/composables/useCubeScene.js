@@ -51,7 +51,7 @@ export async function useCubeScene(container, options = {}) {
   }
   const width = containerRect.width
   const height = containerRect.height
-  let isAnimate = false
+  let isAnimateRef = ref(false)
   let animationId = null
   // Scene
   const scene = new THREE.Scene()
@@ -154,12 +154,12 @@ export async function useCubeScene(container, options = {}) {
   // ANIMATION ############
 
   function startAnimation() {
-    isAnimate = true
+    isAnimateRef.value = true
     OrbitControl.enableRotate = false
   }
 
   function stopAnimation() {
-    isAnimate = false
+    isAnimateRef.value = false
     OrbitControl.enableRotate = true
   }
   /**
@@ -197,7 +197,7 @@ export async function useCubeScene(container, options = {}) {
     }
   }
 
-  function animateRotation(group, selected, targetQuaternion, speed = 0.15) {
+  function animateRotation(group, selected, targetQuaternion, speed = 0.015) {
     return new Promise((resolve) => {
       function update() {
         group.quaternion.slerp(targetQuaternion, speed)
@@ -288,7 +288,7 @@ export async function useCubeScene(container, options = {}) {
     camera,
     renderer,
     OrbitControl,
-    isAnimate,
+    isAnimate: isAnimateRef,
     rubiksCube,
     detectorGrp,
     selectorGrp,

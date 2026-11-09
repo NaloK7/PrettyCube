@@ -1,13 +1,11 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useStore } from '@/composables/useStore.js'
 import { useCubeScene } from '@/composables/useCubeScene.js'
 import { useMouseEvents } from '@/composables/useMouseEvents.js'
 
 const containerRef = ref(null)
-
 const { threeScene } = useStore()
-
 let mouseEvents = null
 
 function onMouseDown(event) {
@@ -34,7 +32,7 @@ onMounted(async () => {
     threeScene.value = await useCubeScene(containerRef.value, {
       modelPath: 'base',
     })
-
+    
     mouseEvents = useMouseEvents(containerRef.value)
   }
 })

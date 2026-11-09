@@ -20,7 +20,7 @@ export function useMouseEvents() {
   const { prepareRotation } = useCubeLogic()
 
   function handleMouseDown(event, threeScene) {
-    let isAnimate = threeScene.isAnimate
+    let isAnimate = threeScene.isAnimate.value
     if (!isAnimate) {
       const raycaster = new THREE.Raycaster()
       startMouse = getMouseNDC(event, threeScene.containerRect)
@@ -47,7 +47,7 @@ export function useMouseEvents() {
 
   function handleMouseMove(event, threeScene) {
     if (!dragging) return
-
+    threeScene.startAnimation()
     endMouse = getMouseNDC(event, threeScene.containerRect)
 
     const start3D = new THREE.Vector3(startMouse.x, startMouse.y, 0).unproject(
@@ -62,14 +62,14 @@ export function useMouseEvents() {
 
     const mouseDistance = endMouse.distanceTo(startMouse)
     if (mouseDistance < MIN_DRAG_DISTANCE) return
-    threeScene.startAnimation()
+
     dragging = false
-    let horizontalMove = intersectedDetector.userData.horMouv // string: selector_B
-    let verticalMove = intersectedDetector.userData.verMouv
+    let horizontalMoveSelector = intersectedDetector.userData.horMouv // string: selector_B
+    let verticalMoveSelector = intersectedDetector.userData.verMouv
     let moveSelected = determineDragDirection(
       dragVector3D,
-      horizontalMove,
-      verticalMove,
+      horizontalMoveSelector,
+      verticalMoveSelector,
       rightVector,
       upVector
     )
@@ -83,7 +83,6 @@ export function useMouseEvents() {
       .animateRotation(rotationGroup, selectedCubes, targetQuaternion)
       .then(() => {
         threeScene.stopAnimation()
-        threeScene.OrbitControl.enableRotate = true
       })
   }
 
@@ -92,8 +91,8 @@ export function useMouseEvents() {
     endMouse = null
     intersectedDetector = null
     dragging = false
-    if (!threeScene.isAnimate) {
-      threeScene.OrbitControl.enableRotate = true
+    if (!threeScene.isAnimate.value) {
+      threeScene.stopAnimation()
     }
   }
 

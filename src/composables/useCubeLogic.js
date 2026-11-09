@@ -35,9 +35,7 @@ export function useCubeLogic() {
     return selectedCubes
   }
 
-  function prepareDrag(threeScene, selectorName) {
-    console.log("prepare drag");
-    
+  function prepareDrag(threeScene, selectorName) {    
     let activeSelector = threeScene.selectorGrp.children.find(
       (child) => child.name === selectorName
     )
